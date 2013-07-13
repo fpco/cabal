@@ -1,4 +1,4 @@
-Name: Cabal
+Name: Cabal-fpco
 Version: 1.16.0.3
 Copyright: 2003-2006, Isaac Jones
            2005-2011, Duncan Coutts
@@ -127,7 +127,7 @@ Library
         Distribution.Compat.TempFile,
         Distribution.Simple.GHC.IPI641,
         Distribution.Simple.GHC.IPI642,
-        Paths_Cabal
+        Paths_Cabal_fpco
 
   Default-Language: Haskell98
   Default-Extensions: CPP
@@ -162,7 +162,7 @@ test-suite unit-tests
         test-framework-hunit,
         HUnit,
         QuickCheck >= 2.1.0.1,
-        Cabal,
+        Cabal-fpco,
         process,
         directory,
         filepath,
