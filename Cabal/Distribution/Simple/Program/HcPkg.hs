@@ -120,12 +120,14 @@ hide verbosity hcPkg packagedb pkgid =
 
 -- | Call @hc-pkg@ to get all the installed packages.
 --
-dump :: Verbosity -> ConfiguredProgram -> PackageDB -> IO [InstalledPackageInfo]
-dump verbosity hcPkg packagedb = do
+dump :: (String -> IO ()) -> Verbosity -> ConfiguredProgram -> PackageDB -> IO [InstalledPackageInfo]
+dump log' verbosity hcPkg packagedb = do
+  log' "HcPkg.dump1"
 
   output <- getProgramInvocationOutput verbosity
               (dumpInvocation hcPkg verbosity packagedb)
     `catchExit` \_ -> die $ programId hcPkg ++ " dump failed"
+  log' "HcPkg.dump2"
 
   case parsePackages output of
     Left ok -> return ok

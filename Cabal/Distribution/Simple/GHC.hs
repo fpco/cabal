@@ -467,13 +467,19 @@ oldLanguageExtensions =
     ,(ConstrainedClassMethods    , fglasgowExts)
     ]
 
-getInstalledPackages :: Verbosity -> PackageDBStack -> ProgramConfiguration
+getInstalledPackages :: (String -> IO ())
+                     -> Verbosity -> PackageDBStack -> ProgramConfiguration
                      -> IO PackageIndex
-getInstalledPackages verbosity packagedbs conf = do
+getInstalledPackages log' verbosity packagedbs conf = do
+  log' "getInstalledPackages1"
   checkPackageDbEnvVar
+  log' "getInstalledPackages2"
   checkPackageDbStack packagedbs
-  pkgss <- getInstalledPackages' verbosity packagedbs conf
+  log' "getInstalledPackages3"
+  pkgss <- getInstalledPackages' log' verbosity packagedbs conf
+  log' "getInstalledPackages4"
   topDir <- ghcLibDir' verbosity ghcProg
+  log' "getInstalledPackages5"
   let indexes = [ PackageIndex.fromList (map (substTopDir topDir) pkgs)
                 | (_, pkgs) <- pkgss ]
   return $! hackRtsPackage (mconcat indexes)
@@ -537,12 +543,13 @@ removeMingwIncludeDir pkg =
 
 -- | Get the packages from specific PackageDBs, not cumulative.
 --
-getInstalledPackages' :: Verbosity -> [PackageDB] -> ProgramConfiguration
+getInstalledPackages' :: (String -> IO ()) -> Verbosity -> [PackageDB] -> ProgramConfiguration
                      -> IO [(PackageDB, [InstalledPackageInfo])]
-getInstalledPackages' verbosity packagedbs conf
+getInstalledPackages' log' verbosity packagedbs conf
   | ghcVersion >= Version [6,9] [] =
   sequence
-    [ do pkgs <- HcPkg.dump verbosity ghcPkgProg packagedb
+    [ do log' $ "getInstalledPackages'1: " ++ show packagedb
+         pkgs <- HcPkg.dump log' verbosity ghcPkgProg packagedb
          return (packagedb, pkgs)
     | packagedb <- packagedbs ]
 
@@ -551,7 +558,7 @@ getInstalledPackages' verbosity packagedbs conf
     Just ghcProg    = lookupProgram ghcProgram conf
     Just ghcVersion = programVersion ghcProg
 
-getInstalledPackages' verbosity packagedbs conf = do
+getInstalledPackages' _ verbosity packagedbs conf = do
     str <- rawSystemProgramStdoutConf verbosity ghcPkgProgram conf ["list"]
     let pkgFiles = [ init line | line <- lines str, last line == ':' ]
         dbFile packagedb = case (packagedb, pkgFiles) of
