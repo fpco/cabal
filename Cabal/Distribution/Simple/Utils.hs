@@ -504,7 +504,7 @@ rawSystemStdInOutLog :: (String -> IO ()) -> Verbosity
                   -> Bool                 -- ^ output in binary mode
                   -> IO (String, String, ExitCode) -- ^ output, errors, exit
 rawSystemStdInOutLog log' verbosity path args input outputBinary = do
-  log' $ "rawSystemStdInOut1: " ++ show (verbosity, path, args, input, outputBinary)
+  log' $ "rawSystemStdInOut1: " ++ show (verbosity, path, args)
   printRawCommandAndArgs verbosity path args
   log' $ "rawSystemStdInOut2"
 
@@ -570,7 +570,7 @@ rawSystemStdInOutLog log' verbosity path args input outputBinary = do
         debug verbosity $ path ++ " returned " ++ show exitcode
                        ++ if null err then "" else
                           " with error message:\n" ++ err
-      log' $ "rawSystemStdInOut20: " ++ show (out, err, exitcode)
+      log' $ "rawSystemStdInOut20: " ++ show exitcode
 
       return (out, err, exitcode)
 #else

@@ -161,10 +161,10 @@ getProgramInvocationOutputLog log' verbosity
   (output, errors, exitCode) <- rawSystemStdInOutLog log' verbosity
                                   path args
                                   Nothing utf8
-  log' $ "getProgramInvocationOutputLog2: " ++ show (output, errors, exitCode)
+  log' $ "getProgramInvocationOutputLog2: " ++ show exitCode
   when (exitCode /= ExitSuccess) $
     die errors
-  log' $ "getProgramInvocationOutputLog3: " ++ decode output
+  log' $ "getProgramInvocationOutputLog3"
   return (decode output)
 
 
