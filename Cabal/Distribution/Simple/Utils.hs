@@ -62,6 +62,7 @@ module Distribution.Simple.Utils (
         rawSystemExitWithEnv,
         rawSystemStdout,
         rawSystemStdInOut,
+        rawSystemStdInOutLog,
         maybeExit,
         xargs,
         findProgramLocation,
@@ -495,6 +496,84 @@ rawSystemStdInOut verbosity path args input outputBinary = do
       hSetBinaryMode hnd outputBinary
       output <- hGetContents hnd
       length output `seq` return (output, "", exitcode)
+#endif
+
+rawSystemStdInOutLog :: (String -> IO ()) -> Verbosity
+                  -> FilePath -> [String]
+                  -> Maybe (String, Bool) -- ^ input text and binary mode
+                  -> Bool                 -- ^ output in binary mode
+                  -> IO (String, String, ExitCode) -- ^ output, errors, exit
+rawSystemStdInOutLog log' verbosity path args input outputBinary = do
+  log' $ "rawSystemStdInOut1: " ++ show (verbosity, path, args, input, outputBinary)
+  printRawCommandAndArgs verbosity path args
+  log' $ "rawSystemStdInOut2"
+
+#ifdef __GLASGOW_HASKELL__
+  log' $ "rawSystemStdInOut3"
+  Exception.bracket
+     (runInteractiveProcess path args Nothing Nothing)
+     (\(inh,outh,errh,_) -> hClose inh >> hClose outh >> hClose errh)
+    $ \(inh,outh,errh,pid) -> do
+      log' $ "rawSystemStdInOut4"
+
+      -- output mode depends on what the caller wants
+      hSetBinaryMode outh outputBinary
+      log' $ "rawSystemStdInOut5"
+      -- but the errors are always assumed to be text (in the current locale)
+      hSetBinaryMode errh False
+      log' $ "rawSystemStdInOut6"
+
+      -- fork off a couple threads to pull on the stderr and stdout
+      -- so if the process writes to stderr we do not block.
+
+      err <- hGetContents errh
+      log' $ "rawSystemStdInOut7"
+      out <- hGetContents outh
+      log' $ "rawSystemStdInOut8"
+
+      mv <- newEmptyMVar
+      log' $ "rawSystemStdInOut9"
+      let force str = (evaluate (length str) >> return ())
+            `Exception.finally` putMVar mv ()
+          --TODO: handle exceptions like text decoding.
+      _ <- forkIO $ force out
+      log' $ "rawSystemStdInOut10"
+      _ <- forkIO $ force err
+      log' $ "rawSystemStdInOut11"
+
+      -- push all the input, if any
+      case input of
+        Nothing -> log' "rawSystemStdInOut12a"
+        Just (inputStr, inputBinary) -> do
+          log' $ "rawSystemStdInOut12b"
+                -- input mode depends on what the caller wants
+          hSetBinaryMode inh inputBinary
+          log' $ "rawSystemStdInOut13"
+          hPutStr inh inputStr
+          log' $ "rawSystemStdInOut14"
+          hClose inh
+          log' $ "rawSystemStdInOut15"
+          --TODO: this probably fails if the process refuses to consume
+          -- or if it closes stdin (eg if it exits)
+
+      log' $ "rawSystemStdInOut16"
+      -- wait for both to finish, in either order
+      takeMVar mv
+      log' $ "rawSystemStdInOut17"
+      takeMVar mv
+      log' $ "rawSystemStdInOut18"
+
+      -- wait for the program to terminate
+      exitcode <- waitForProcess pid
+      log' $ "rawSystemStdInOut19"
+      unless (exitcode == ExitSuccess) $
+        debug verbosity $ path ++ " returned " ++ show exitcode
+                       ++ if null err then "" else
+                          " with error message:\n" ++ err
+      log' $ "rawSystemStdInOut20: " ++ show (out, err, exitcode)
+
+      return (out, err, exitcode)
+#else
 #endif
 
 

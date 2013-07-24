@@ -19,13 +19,14 @@ module Distribution.Simple.Program.Run (
 
     runProgramInvocation,
     getProgramInvocationOutput,
+    getProgramInvocationOutputLog,
 
   ) where
 
 import Distribution.Simple.Program.Types
          ( ConfiguredProgram(..), programPath )
 import Distribution.Simple.Utils
-         ( die, rawSystemExit, rawSystemStdInOut
+         ( die, rawSystemExit, rawSystemStdInOut, rawSystemStdInOutLog
          , toUTF8, fromUTF8, normaliseLineEndings )
 import Distribution.Verbosity
          ( Verbosity )
@@ -140,9 +141,32 @@ getProgramInvocationOutput verbosity
     die errors
   return (decode output)
 
-
 getProgramInvocationOutput _ _ =
    die "getProgramInvocationOutput: not yet implemented for this form of invocation"
+
+getProgramInvocationOutputLog :: (String -> IO ()) -> Verbosity -> ProgramInvocation -> IO String
+getProgramInvocationOutputLog log' verbosity
+  ProgramInvocation {
+    progInvokePath  = path,
+    progInvokeArgs  = args,
+    progInvokeEnv   = [],
+    progInvokeCwd   = Nothing,
+    progInvokeInput = Nothing,
+    progInvokeOutputEncoding = encoding
+  } = do
+  let utf8 = case encoding of IOEncodingUTF8 -> True; _ -> False
+      decode | utf8      = fromUTF8 . normaliseLineEndings
+             | otherwise = id
+  log' $ "getProgramInvocationOutputLog1: " ++ show (utf8, path, args)
+  (output, errors, exitCode) <- rawSystemStdInOutLog log' verbosity
+                                  path args
+                                  Nothing utf8
+  log' $ "getProgramInvocationOutputLog2: " ++ show (output, errors, exitCode)
+  when (exitCode /= ExitSuccess) $
+    die errors
+  log' $ "getProgramInvocationOutputLog3: " ++ decode output
+  return (decode output)
+
 
 
 -- | Like the unix xargs program. Useful for when we've got very long command

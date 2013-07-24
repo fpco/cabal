@@ -39,7 +39,7 @@ import Distribution.Simple.Program.Types
          ( ConfiguredProgram(programId, programVersion) )
 import Distribution.Simple.Program.Run
          ( ProgramInvocation(..), IOEncoding(..), programInvocation
-         , runProgramInvocation, getProgramInvocationOutput )
+         , runProgramInvocation, getProgramInvocationOutputLog )
 import Distribution.Version
          ( Version(..) )
 import Distribution.Text
@@ -124,7 +124,7 @@ dump :: (String -> IO ()) -> Verbosity -> ConfiguredProgram -> PackageDB -> IO [
 dump log' verbosity hcPkg packagedb = do
   log' "HcPkg.dump1"
 
-  output <- getProgramInvocationOutput verbosity
+  output <- getProgramInvocationOutputLog log' verbosity
               (dumpInvocation hcPkg verbosity packagedb)
     `catchExit` \_ -> die $ programId hcPkg ++ " dump failed"
   log' "HcPkg.dump2"
