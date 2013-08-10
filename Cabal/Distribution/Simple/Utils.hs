@@ -60,6 +60,7 @@ module Distribution.Simple.Utils (
         rawSystemExit,
         rawSystemExitCode,
         rawSystemExitWithEnv,
+        rawSystemIOWithEnv,
         rawSystemStdout,
         rawSystemStdInOut,
         maybeExit,
@@ -398,6 +399,26 @@ rawSystemExitWithEnv verbosity path args env = do
         debug verbosity $ path ++ " returned " ++ show exitcode
         exitWith exitcode
 
+-- Closes the passed in handles before returning.
+rawSystemIOWithEnv :: Verbosity
+                   -> FilePath
+                   -> [String]
+                   -> Maybe FilePath           -- ^ New working dir or inherit
+                   -> Maybe [(String, String)] -- ^ New environment or inherit
+                   -> Maybe Handle  -- ^ stdin
+                   -> Maybe Handle  -- ^ stdout
+                   -> Maybe Handle  -- ^ stderr
+                   -> IO ExitCode
+rawSystemIOWithEnv verbosity path args mcwd menv inp out err = do
+    maybe (printRawCommandAndArgs       verbosity path args)
+          (printRawCommandAndArgsAndEnv verbosity path args) menv
+    hFlush stdout
+    ph <- runProcess path args mcwd menv inp out err
+    exitcode <- waitForProcess ph
+    unless (exitcode == ExitSuccess) $ do
+      debug verbosity $ path ++ " returned " ++ show exitcode
+    return exitcode
+
 -- | Run a command and return its output.
 --
 -- The output is assumed to be text in the locale encoding.
@@ -405,6 +426,7 @@ rawSystemExitWithEnv verbosity path args env = do
 rawSystemStdout :: Verbosity -> FilePath -> [String] -> IO String
 rawSystemStdout verbosity path args = do
   (output, errors, exitCode) <- rawSystemStdInOut verbosity path args
+                                                  Nothing Nothing
                                                   Nothing False
   when (exitCode /= ExitSuccess) $
     die errors
@@ -415,16 +437,19 @@ rawSystemStdout verbosity path args = do
 -- mode of the input and output.
 --
 rawSystemStdInOut :: Verbosity
-                  -> FilePath -> [String]
-                  -> Maybe (String, Bool) -- ^ input text and binary mode
-                  -> Bool                 -- ^ output in binary mode
+                  -> FilePath                 -- ^ Program location
+                  -> [String]                 -- ^ Arguments
+                  -> Maybe FilePath           -- ^ New working dir or inherit
+                  -> Maybe [(String, String)] -- ^ New environment or inherit
+                  -> Maybe (String, Bool)     -- ^ input text and binary mode
+                  -> Bool                     -- ^ output in binary mode
                   -> IO (String, String, ExitCode) -- ^ output, errors, exit
-rawSystemStdInOut verbosity path args input outputBinary = do
+rawSystemStdInOut verbosity path args mcwd menv input outputBinary = do
   printRawCommandAndArgs verbosity path args
 
 #ifdef __GLASGOW_HASKELL__
   Exception.bracket
-     (runInteractiveProcess path args Nothing Nothing)
+     (runInteractiveProcess path args mcwd menv)
      (\(inh,outh,errh,_) -> hClose inh >> hClose outh >> hClose errh)
     $ \(inh,outh,errh,pid) -> do
 
