@@ -265,7 +265,10 @@ data ConfigFlags = ConfigFlags {
 
     configProgramPaths  :: [(String, FilePath)], -- ^user specifed programs paths
     configProgramArgs   :: [(String, [String])], -- ^user specifed programs args
-    configHcFlavor      :: Flag CompilerFlavor, -- ^The \"flavor\" of the compiler, sugh as GHC or Hugs.
+    configProgramPathExtra :: [FilePath],        -- ^Extend the $PATH
+    configHcFlavor      :: Flag CompilerFlavor, -- ^The \"flavor\" of the
+                                                -- compiler, sugh as GHC or
+                                                -- Hugs.
     configHcPath        :: Flag FilePath, -- ^given compiler location
     configHcPkg         :: Flag FilePath, -- ^given hc-pkg location
     configVanillaLib    :: Flag Bool,     -- ^Enable vanilla library
@@ -464,6 +467,12 @@ configureOptions showOrParseArgs =
          "A list of directories to search for external libraries"
          configExtraLibDirs (\v flags -> flags {configExtraLibDirs = v})
          (reqArg' "PATH" (\x -> [x]) id)
+
+      ,option "" ["extra-prog-path"]
+         "A list of directories to search for required programs (in addition to the normal search locations)"
+         configProgramPathExtra (\v flags -> flags {configProgramPathExtra = v})
+         (reqArg' "PATH" (\x -> [x]) id)
+
       ,option "" ["constraint"]
          "A list of additional constraints on the dependencies."
          configConstraints (\v flags -> flags { configConstraints = v})
@@ -579,6 +588,7 @@ instance Monoid ConfigFlags where
     configPrograms      = error "FIXME: remove configPrograms",
     configProgramPaths  = mempty,
     configProgramArgs   = mempty,
+    configProgramPathExtra = mempty,
     configHcFlavor      = mempty,
     configHcPath        = mempty,
     configHcPkg         = mempty,
@@ -612,6 +622,7 @@ instance Monoid ConfigFlags where
     configPrograms      = configPrograms b,
     configProgramPaths  = combine configProgramPaths,
     configProgramArgs   = combine configProgramArgs,
+    configProgramPathExtra = combine configProgramPathExtra,
     configHcFlavor      = combine configHcFlavor,
     configHcPath        = combine configHcPath,
     configHcPkg         = combine configHcPkg,
