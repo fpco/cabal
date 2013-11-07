@@ -71,6 +71,7 @@ module Distribution.Simple.GHC (
         invokeHcPkg,
         registerPackage,
         componentGhcOptions,
+        componentCcGhcOptions,
         ghcLibDir,
         ghcDynamic,
  ) where
