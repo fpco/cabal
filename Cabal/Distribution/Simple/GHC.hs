@@ -67,6 +67,7 @@ module Distribution.Simple.GHC (
         libAbiHash,
         registerPackage,
         componentGhcOptions,
+        componentCcGhcOptions,
         ghcLibDir,
 
         -- * Deprecated
