@@ -219,7 +219,7 @@ library
   default-extensions: CPP
 
   -- avoid clashing with standard Cabal
-  exposed: false
+  exposed: False
 
 -- Small, fast running tests.
 test-suite unit-tests
