@@ -199,13 +199,13 @@ import Distribution.Compat.Exception
 import Distribution.Verbosity
 
 #ifdef VERSION_base
-import qualified Paths_Cabal (version)
+import qualified Paths_Cabal_ide_backend (version)
 #endif
 
 -- We only get our own version number when we're building with ourselves
 cabalVersion :: Version
 #if defined(VERSION_base)
-cabalVersion = Paths_Cabal.version
+cabalVersion = Paths_Cabal_ide_backend.version
 #elif defined(CABAL_VERSION)
 cabalVersion = Version [CABAL_VERSION] []
 #else

@@ -1,4 +1,4 @@
-name: Cabal
+name: Cabal-ide-backend
 version: 1.23.0.0
 copyright: 2003-2006, Isaac Jones
            2005-2011, Duncan Coutts
@@ -143,9 +143,9 @@ library
     bytestring >= 0.9
 
   if flag(bundled-binary-generic)
-    build-depends: binary >= 0.5 && < 0.7
+    build-depends: binary-ide-backend >= 0.5 && < 0.7
   else
-    build-depends: binary >= 0.7 && < 0.8
+    build-depends: binary-ide-backend >= 0.7 && < 0.8
 
   -- Needed for GHC.Generics before GHC 7.6
   if impl(ghc < 7.6)
@@ -240,7 +240,7 @@ library
     Distribution.Simple.GHC.IPI641
     Distribution.Simple.GHC.IPI642
     Distribution.Simple.GHC.ImplInfo
-    Paths_Cabal
+    Paths_Cabal_ide_backend
 
   if flag(bundled-binary-generic)
     other-modules:
@@ -249,6 +249,9 @@ library
 
   default-language: Haskell98
   default-extensions: CPP
+
+  -- avoid clashing with standard Cabal
+  exposed: False
 
 -- Small, fast running tests.
 test-suite unit-tests
@@ -313,7 +316,7 @@ test-suite package-tests
     test-framework-hunit,
     HUnit,
     QuickCheck >= 2.1.0.1 && < 2.8,
-    Cabal,
+    Cabal-ide-backend,
     process,
     directory,
     filepath,
