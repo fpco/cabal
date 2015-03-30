@@ -11,6 +11,11 @@ homepage: http://www.haskell.org/cabal/
 bug-reports: https://github.com/haskell/cabal/issues
 synopsis: A framework for packaging Haskell software
 description:
+  NOTE: This is a temporary fork of Cabal necessary for
+  <https://github.com/fpco/ide-backend>. It is not intended as a replacement for
+  the standard Cabal package, and should in general not be used at all outside of
+  ide-backend.
+  .
   The Haskell Common Architecture for Building Applications and
   Libraries: a framework defining a common interface for authors to more
   easily build their Haskell applications in a portable way.
@@ -143,9 +148,9 @@ library
     bytestring >= 0.9
 
   if flag(bundled-binary-generic)
-    build-depends: binary-ide-backend >= 0.5 && < 0.7
+    build-depends: binary             >= 0.5 && < 0.7
   else
-    build-depends: binary-ide-backend >= 0.7 && < 0.8
+    build-depends: binary             >= 0.7 && < 0.8
 
   -- Needed for GHC.Generics before GHC 7.6
   if impl(ghc < 7.6)
